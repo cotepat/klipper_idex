@@ -27,17 +27,21 @@ class CartKinematics:
             self.dual_carriage_axis = {'x': 0, 'y': 1}[dc_axis]
             # setup second dual carriage rail
             self.rails.append(stepper.LookupMultiRail(dc_config))
-            self.rails[3].setup_itersolve('cartesian_stepper_alloc', dc_axis.encode())
+            self.rails[3].setup_itersolve('cartesian_stepper_alloc',
+                                          dc_axis.encode())
             dc_rail_0 = idex_modes.DualCarriagesRail(
-                self.printer, self.rails[self.dual_carriage_axis], axis=self.dual_carriage_axis, active=True,
-                stepper_alloc_active=('cartesian_stepper_alloc', dc_axis.encode()),
-                # stepper_alloc_inactive=('cartesian_reverse_stepper_alloc', b'x')
+                self.printer, self.rails[self.dual_carriage_axis],
+                axis=self.dual_carriage_axis, active=True,
+                stepper_alloc_active=('cartesian_stepper_alloc',
+                                      dc_axis.encode()),
                 )
             dc_rail_1 = idex_modes.DualCarriagesRail(
-                self.printer, self.rails[3], axis=self.dual_carriage_axis, active=False,
-                stepper_alloc_active=('cartesian_stepper_alloc', dc_axis.encode()),
-                # stepper_alloc_inactive=('cartesian_reverse_stepper_alloc', b'x'),
-                stepper_alloc_reverse=('cartesian_reverse_stepper_alloc', dc_axis.encode())
+                self.printer, self.rails[3],
+                axis=self.dual_carriage_axis, active=False,
+                stepper_alloc_active=('cartesian_stepper_alloc',
+                                      dc_axis.encode()),
+                stepper_alloc_reverse=('cartesian_reverse_stepper_alloc',
+                                       dc_axis.encode())
                 )
             self.dc_module = idex_modes.DualCarriages(self.printer,
                         dc_rail_0, dc_rail_1, axis=self.dual_carriage_axis)
@@ -87,7 +91,8 @@ class CartKinematics:
                 self.dc_module.save_idex_state()
                 for i in [0,1]:
                     self.dc_module.toggle_active_dc_rail(i)
-                    self._home_axis(homing_state, axis, self.rails[self.dual_carriage_axis])
+                    self._home_axis(homing_state, axis,
+                                    self.rails[self.dual_carriage_axis])
                 self.dc_module.restore_idex_state()
             else:
                 self._home_axis(homing_state, axis, self.rails[axis])
