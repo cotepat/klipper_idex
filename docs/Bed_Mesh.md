@@ -371,7 +371,7 @@ following parameters are available:
   - `MESH_ORIGIN`
   - `ROUND_PROBE_COUNT`
 - All beds:
-  - `RELATIVE_REFERNCE_INDEX`
+  - `RELATIVE_REFERENCE_INDEX`
   - `ALGORITHM`
 
 See the configuration documentation above for details on how each parameter
@@ -390,9 +390,7 @@ to write the profile to printer.cfg.
 Profiles can be loaded by executing `BED_MESH_PROFILE LOAD=<name>`.
 
 It should be noted that each time a BED_MESH_CALIBRATE occurs, the current
-state is automatically saved to the _default_ profile.  If this profile
-exists it is automatically loaded when Klipper starts.  If this behavior
-is not desirable the _default_ profile can be removed as follows:
+state is automatically saved to the _default_ profile. The _default_ profile can be removed as follows:
 
 `BED_MESH_PROFILE REMOVE=default`
 
