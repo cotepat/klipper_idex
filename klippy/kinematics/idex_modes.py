@@ -28,8 +28,7 @@ class DualCarriages:
         for i, dc in enumerate(self.dc):
             dc_rail = dc.get_rail()
             if i != index:
-                if dc.is_active():
-                    dc.inactivate(pos)
+                dc.inactivate(pos)
                 kin.override_rail(3, dc_rail)
             elif dc.is_active() is False:
                 newpos = pos[:self.axis] + [dc.axis_position] \
@@ -195,6 +194,7 @@ class DualCarriagesRail:
         self.axis_position = -1
         self.stepper_active_sk = {}
         self.stepper_inactive_sk = {}
+        self.stepper_reverse_sk = {}
         for s in rail.get_steppers():
             self._save_sk(self.status, s, s.get_stepper_kinematics())
     def _alloc_sk(self, alloc_func, *params):
@@ -212,31 +212,52 @@ class DualCarriagesRail:
             if sk is None and self.stepper_alloc_inactive:
                 sk = self._alloc_sk(*self.stepper_alloc_inactive)
                 self._save_sk(status, stepper, sk)
+        elif status == self.REVERSED:
+            sk = self.stepper_reverse_sk.get(stepper, None)
+            if sk is None and self.stepper_alloc_reverse:
+                sk = self._alloc_sk(*self.stepper_alloc_reverse)
+                self._save_sk(status, stepper, sk) 
         return sk
     def _save_sk(self, status, stepper, sk):
         if status == self.ACTIVE:
             self.stepper_active_sk[stepper] = sk
         elif status == self.INACTIVE:
             self.stepper_inactive_sk[stepper] = sk
-    def _update_stepper_alloc(self, position, active=True):
+        elif status == self.REVERSED:
+            self.stepper_reverse_sk[stepper] = sk
+    def _update_stepper_alloc(self, position, active=True, reverse=False):
         toolhead = self.printer.lookup_object('toolhead')
         self.axis_position = position[self.axis]
         self.rail.set_trapq(None)
         old_status = self.status
-        self.status = (self.INACTIVE, self.ACTIVE)[active]
+        if reverse is True:
+            self.status = self.REVERSED
+            if self.stepper_alloc_reverse is not None:
+                self.rail.set_position(position)
+                self.rail.set_trapq(toolhead.get_trapq())
+        elif active is True:
+            self.status = self.ACTIVE
+            if self.stepper_alloc_active is not None:
+                self.rail.set_position(position)
+                self.rail.set_trapq(toolhead.get_trapq())
+        else:
+            self.status = self.INACTIVE
+            if self.stepper_alloc_inactive is not None:
+                self.rail.set_position(position)
+                self.rail.set_trapq(toolhead.get_trapq())
         for s in self.rail.get_steppers():
             sk = self._get_sk(self.status, s)
             if sk is None:
                 return
             old_sk = s.set_stepper_kinematics(sk)
             self._save_sk(old_status, s, old_sk)
-        self.rail.set_position(position)
-        self.rail.set_trapq(toolhead.get_trapq())
     def get_rail(self):
         return self.rail
     def is_active(self):
-        return self.status == self.ACTIVE
-    def activate(self, position):
-        self._update_stepper_alloc(position, active=True)
+        return self.status in [self.ACTIVE, self.REVERSED]
+    def is_reversed(self):
+        return self.status == self.REVERSED
+    def activate(self, position, reverse=False):
+        self._update_stepper_alloc(position, active=True, reverse=reverse)
     def inactivate(self, position):
         self._update_stepper_alloc(position, active=False)
